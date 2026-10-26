@@ -18,7 +18,6 @@ Tuning values are at the top of `pip-trackpad.uc.js` (`PIP` and `ZOOM`) and `chr
 3. Add `your-username/your-repo` in Sine's GitHub repository field, install, enable, and restart Zen.
 
 ## Note on the look
-The script also registers the same rules from `chrome.css` as a user style sheet, so the
-button look applies to the PiP window even if the mod manager only loads `chrome.css` into
-the main browser window. Edit the variables in both places (or just delete `chrome.css`
-and edit the `LOOK_CSS` block at the top of `pip-trackpad.uc.js`).
+Style sheets did not reach the PiP window in testing, so `pip-trackpad.uc.js` applies the look
+itself as inline styles. Edit the `LOOK` line near the top of the script to change colors and sizes.
+`chrome.css` is kept only as a reference and can be deleted.
