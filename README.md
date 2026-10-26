@@ -16,3 +16,9 @@ Tuning values are at the top of `pip-trackpad.uc.js` (`PIP` and `ZOOM`) and `chr
 1. In Zen: Settings > Sine Mods, enable JavaScript from unofficial sources (`sine.allow-unsafe-js`).
 2. Push these files (at the top level of the repo) to a public GitHub repository.
 3. Add `your-username/your-repo` in Sine's GitHub repository field, install, enable, and restart Zen.
+
+## Note on the look
+The script also registers the same rules from `chrome.css` as a user style sheet, so the
+button look applies to the PiP window even if the mod manager only loads `chrome.css` into
+the main browser window. Edit the variables in both places (or just delete `chrome.css`
+and edit the `LOOK_CSS` block at the top of `pip-trackpad.uc.js`).

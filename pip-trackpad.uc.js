@@ -5,6 +5,80 @@
   "use strict";
   if (window.__pipTrackpadMod) return;
 
+  // The look (same rules as chrome.css), registered as a user style sheet so it
+  // applies to the PiP window itself, not only to the main browser window.
+  var LOOK_CSS = `/* Custom Picture-in-Picture buttons */
+@-moz-document url("chrome://pictureinpicture/content/player.xhtml") {
+
+  :root {
+    --pip-icon-color: #e8e8e8;      /* icon color: light gray (#fff = pure white) */
+    --pip-btn-bg: rgba(20, 20, 20, 0.65);
+    --pip-btn-radius: 50%;          /* 50% = round, 8px = rounded square */
+    --pip-small-icon: 16px;         /* icon size for audio and back-to-tab */
+    --pip-seek-scale: 0.85;         /* skip back/forward button size (1 = original) */
+    --pip-seek-size: 32px;          /* the skip buttons' original width, used to keep their spacing */
+    --pip-play-scale: 1.12;         /* play/pause button size (1 = original) */
+    --pip-play-size: 32px;          /* the play/pause button's original width, used to keep spacing */
+  }
+
+  /* All control buttons: round, dark translucent, light gray icons */
+  .control-button {
+    background-color: var(--pip-btn-bg) !important;
+    border-radius: var(--pip-btn-radius) !important;
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--pip-icon-color) !important;
+    color: var(--pip-icon-color) !important;
+  }
+
+  /* Smaller icons inside the audio and back-to-tab buttons
+     (the button circle keeps its normal size) */
+  #audio, #unpip, #playpause {
+    background-size: var(--pip-small-icon) auto !important;
+  }
+
+  /* Slightly smaller skip back / skip forward buttons. Each one shrinks toward
+     its own center, so it is also slid toward play/pause by half the size it
+     lost, which keeps the gap to play/pause the same as before. */
+  #seekBackward, #seekForward {
+    scale: var(--pip-seek-scale);
+  }
+  /* Slightly bigger play/pause button (grows around its center). */
+  #playpause {
+    scale: var(--pip-play-scale);
+  }
+  /* Net slide for the skip buttons: in by half of what they lost, out by half of
+     what play/pause gained, so the gaps to play/pause stay the same as before. */
+  #seekBackward {
+    translate: calc(var(--pip-seek-size) * (1 - var(--pip-seek-scale)) / 2 - var(--pip-play-size) * (var(--pip-play-scale) - 1) / 2) 0;
+  }
+  #seekForward {
+    translate: calc(var(--pip-play-size) * (var(--pip-play-scale) - 1) / 2 - var(--pip-seek-size) * (1 - var(--pip-seek-scale)) / 2) 0;
+  }
+
+  /* Swap the top buttons: back-to-tab on the left,
+     minimize and close on the right (close in the corner) */
+  #unpip {
+    left: 10px !important;
+    right: auto !important;
+    /* Built-in Firefox left arrow icon (takes the icon color automatically) */
+    background-image: url("chrome://global/skin/icons/arrow-left.svg") !important;
+  }
+  #close {
+    left: auto !important;
+    right: 10px !important;
+  }
+  #minimize {
+    left: auto !important;
+    right: 50px !important;
+  }
+}
+`;
+  try {
+    var sss = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Ci.nsIStyleSheetService);
+    var lookUri = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(LOOK_CSS));
+    if (!sss.sheetRegistered(lookUri, sss.USER_SHEET)) sss.loadAndRegisterSheet(lookUri, sss.USER_SHEET);
+  } catch (err) { console.log("PiP look: could not register style sheet:", err); }
+
   var PIP = { SPEED: 1.35, HOLD: 300, IDLE: 120, MARGIN: 12, SNAP: true, WALL: 80, RESIST: 0.6, SETTLE_MS: 800, GLIDE_N: 6, GLIDE_MIN: 4, GLIDE_DROP: 0.85, NEW_RISE: 6, NEW_GAP: 130, CURSOR_RETURN: true, CURSOR_TOL: 5, CURSOR_GRACE: 80, OWN_TOL: 4, KEEP: 0.8, DRAG_SNAP: true, DRAG_QUIET: 400 };
   var ZOOM = { GAIN: 0.8, DIR: 1, EASE: 0.4, MIN_W: 240, MAX_FRAC: 0.9, MARGIN: 12 };
   var M = Ci.nsIDOMWindowUtils.NATIVE_MOUSE_MESSAGE_MOVE;
@@ -192,6 +266,7 @@
 
   var destroy = () => {
     try { Services.obs.removeObserver(observer, "domwindowopened"); } catch (e) {}
+    try { sss.unregisterSheet(lookUri, sss.USER_SHEET); } catch (e) {}
     var en = Services.wm.getEnumerator("Toolkit:PictureInPicture");
     while (en.hasMoreElements()) {
       var w = en.getNext();
