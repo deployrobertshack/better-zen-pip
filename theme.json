@@ -1,0 +1,10 @@
+{
+  "id": "pip-buttons-and-trackpad",
+  "name": "PiP Buttons and Trackpad",
+  "description": "Round dark Picture-in-Picture buttons with a left-arrow back-to-tab button and swapped top buttons, plus two-finger swipe to move the PiP window and Option+swipe to resize it.",
+  "version": "1.0.0",
+  "author": "you",
+  "scripts": {
+    "pip-trackpad.uc.js": {}
+  }
+}

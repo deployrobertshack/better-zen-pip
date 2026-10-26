@@ -1,0 +1,65 @@
+/* Custom Picture-in-Picture buttons */
+@-moz-document url("chrome://pictureinpicture/content/player.xhtml") {
+
+  :root {
+    --pip-icon-color: #e8e8e8;      /* icon color: light gray (#fff = pure white) */
+    --pip-btn-bg: rgba(20, 20, 20, 0.65);
+    --pip-btn-radius: 50%;          /* 50% = round, 8px = rounded square */
+    --pip-small-icon: 16px;         /* icon size for audio and back-to-tab */
+    --pip-seek-scale: 0.85;         /* skip back/forward button size (1 = original) */
+    --pip-seek-size: 32px;          /* the skip buttons' original width, used to keep their spacing */
+    --pip-play-scale: 1.12;         /* play/pause button size (1 = original) */
+    --pip-play-size: 32px;          /* the play/pause button's original width, used to keep spacing */
+  }
+
+  /* All control buttons: round, dark translucent, light gray icons */
+  .control-button {
+    background-color: var(--pip-btn-bg) !important;
+    border-radius: var(--pip-btn-radius) !important;
+    -moz-context-properties: fill, stroke !important;
+    fill: var(--pip-icon-color) !important;
+    color: var(--pip-icon-color) !important;
+  }
+
+  /* Smaller icons inside the audio and back-to-tab buttons
+     (the button circle keeps its normal size) */
+  #audio, #unpip, #playpause {
+    background-size: var(--pip-small-icon) auto !important;
+  }
+
+  /* Slightly smaller skip back / skip forward buttons. Each one shrinks toward
+     its own center, so it is also slid toward play/pause by half the size it
+     lost, which keeps the gap to play/pause the same as before. */
+  #seekBackward, #seekForward {
+    scale: var(--pip-seek-scale);
+  }
+  /* Slightly bigger play/pause button (grows around its center). */
+  #playpause {
+    scale: var(--pip-play-scale);
+  }
+  /* Net slide for the skip buttons: in by half of what they lost, out by half of
+     what play/pause gained, so the gaps to play/pause stay the same as before. */
+  #seekBackward {
+    translate: calc(var(--pip-seek-size) * (1 - var(--pip-seek-scale)) / 2 - var(--pip-play-size) * (var(--pip-play-scale) - 1) / 2) 0;
+  }
+  #seekForward {
+    translate: calc(var(--pip-play-size) * (var(--pip-play-scale) - 1) / 2 - var(--pip-seek-size) * (1 - var(--pip-seek-scale)) / 2) 0;
+  }
+
+  /* Swap the top buttons: back-to-tab on the left,
+     minimize and close on the right (close in the corner) */
+  #unpip {
+    left: 10px !important;
+    right: auto !important;
+    /* Built-in Firefox left arrow icon (takes the icon color automatically) */
+    background-image: url("chrome://global/skin/icons/arrow-left.svg") !important;
+  }
+  #close {
+    left: auto !important;
+    right: 10px !important;
+  }
+  #minimize {
+    left: auto !important;
+    right: 50px !important;
+  }
+}
