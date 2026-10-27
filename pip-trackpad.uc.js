@@ -1,12 +1,11 @@
 // Picture-in-Picture trackpad controls for Zen.
 //   - two-finger swipe moves the PiP window (rubber-band wall, spring back, cursor follows)
-//   - the window grows very slightly while it is being moved ("picked up") and eases back
 //   - Option + two-finger swipe up/down resizes it smoothly
 (function () {
   "use strict";
   if (window.__pipTrackpadMod) return;
 
-  var PIP = { SPEED: 1.35, HOLD: 300, IDLE: 120, MARGIN: 12, SNAP: true, WALL: 80, RESIST: 0.6, SETTLE_MS: 800, GLIDE_N: 6, GLIDE_MIN: 4, GLIDE_DROP: 0.85, NEW_RISE: 6, NEW_GAP: 130, CURSOR_RETURN: true, CURSOR_TOL: 5, CURSOR_GRACE: 80, OWN_TOL: 4, KEEP: 0.8, DRAG_SNAP: true, DRAG_QUIET: 400, LIFT: 0.025 };
+  var PIP = { SPEED: 1.35, HOLD: 300, IDLE: 120, MARGIN: 12, SNAP: true, WALL: 80, RESIST: 0.6, SETTLE_MS: 800, GLIDE_N: 6, GLIDE_MIN: 4, GLIDE_DROP: 0.85, NEW_RISE: 6, NEW_GAP: 130, CURSOR_RETURN: true, CURSOR_TOL: 5, CURSOR_GRACE: 80, OWN_TOL: 4, KEEP: 0.8, DRAG_SNAP: true, DRAG_QUIET: 400 };
   var ZOOM = { GAIN: 0.8, DIR: 1, EASE: 0.4, MIN_W: 240, MAX_FRAC: 0.9, MARGIN: 12 };
   var M = Ci.nsIDOMWindowUtils.NATIVE_MOUSE_MESSAGE_MOVE;
 
@@ -29,42 +28,21 @@
       var r = w.devicePixelRatio;
       try { w.windowUtils.sendNativeMouseEvent(x * r, y * r, M, 0, 0, d.documentElement, null); } catch (err) { console.log("cursor move failed:", err); }
     };
-    // "Picked up" effect: the window is a little bigger (PIP.LIFT, a fraction of its size) while
-    // it is being moved, growing and shrinking around its center. L holds the current extra size.
-    var L = { cw: 0, ch: 0, tw: 0, th: 0, bw: 0, bh: 0, raf: 0 };
-    var place = (x, y) => w.moveTo(x - L.cw / 2, y - L.ch / 2);
-    var liftFrame = () => {
-      L.raf = 0;
-      var k = L.tw > L.cw ? 0.35 : 0.2;
-      L.cw += (L.tw - L.cw) * k; L.ch += (L.th - L.ch) * k;
-      if (Math.abs(L.tw - L.cw) < 0.3 && Math.abs(L.th - L.ch) < 0.3) { L.cw = L.tw; L.ch = L.th; }
-      w.resizeTo(Math.round(L.bw + L.cw), Math.round(L.bh + L.ch));
-      place(st.px, st.py);
-      if (L.cw !== L.tw || L.ch !== L.th) L.raf = w.requestAnimationFrame(liftFrame);
-    };
-    var liftTo = on => {
-      if (!on && L.cw === 0 && !L.raf) return;
-      if (on && L.cw === 0) { L.bw = w.outerWidth; L.bh = w.outerHeight; }
-      L.tw = on ? L.bw * PIP.LIFT : 0; L.th = on ? L.bh * PIP.LIFT : 0;
-      if (!L.raf) L.raf = w.requestAnimationFrame(liftFrame);
-    };
     var bounds = () => {
       if (!PIP.SNAP) return null;
-      var s = w.screen, m = PIP.MARGIN, ow = w.outerWidth - L.cw, oh = w.outerHeight - L.ch;
+      var s = w.screen, m = PIP.MARGIN, ow = w.outerWidth, oh = w.outerHeight;
       var b = { minX: s.availLeft + m, maxX: s.availLeft + s.availWidth - ow - m, minY: s.availTop + m, maxY: s.availTop + s.availHeight - oh - m };
       return Object.values(b).every(Number.isFinite) && b.maxX >= b.minX && b.maxY >= b.minY ? b : null;
     };
     var unhide = () => { st.hidden = false; hide(false); };
     var frame = () => {
       st.raf = 0;
-      place(st.px, st.py);
+      w.moveTo(st.px, st.py);
       moveCursor(st.px + st.offX, st.py + st.offY);
     };
     var finish = (fx, fy) => {
       st.animRaf = 0; st.watch = false;
-      st.px = fx; st.py = fy;
-      place(fx, fy);
-      liftTo(false);
+      w.moveTo(fx, fy);
       if (PIP.CURSOR_RETURN && !st.moved && !st.skipCursor) moveCursor(fx + st.offX, fy + st.offY);
       setTimeout(() => { if (!st.active) unhide(); }, 30);
     };
@@ -74,8 +52,7 @@
       clearTimeout(st.timer);
       if (st.raf) { w.cancelAnimationFrame(st.raf); st.raf = 0; }
       var b = st.b, sx = st.px, sy = st.py;
-      if (!Number.isFinite(sx) || !Number.isFinite(sy)) { unhide(); return; }
-      if (!b) { finish(sx, sy); return; }
+      if (!b || !Number.isFinite(sx) || !Number.isFinite(sy)) { unhide(); return; }
       var tx = clamp(sx, b.minX, b.maxX), ty = clamp(sy, b.minY, b.maxY);
       if (Math.abs(tx - sx) < 1 && Math.abs(ty - sy) < 1) { finish(sx, sy); return; }
       st.watch = true; st.graceUntil = performance.now() + PIP.CURSOR_GRACE;
@@ -86,7 +63,7 @@
         var k = (1 + om * t) * Math.exp(-om * t);
         if (T <= 0 || k < 0.01) { finish(tx, ty); return; }
         st.px = tx + (sx - tx) * k; st.py = ty + (sy - ty) * k;
-        place(st.px, st.py);
+        w.moveTo(st.px, st.py);
         st.animRaf = w.requestAnimationFrame(step);
       };
       st.animRaf = w.requestAnimationFrame(step);
@@ -125,13 +102,12 @@
       if (!st.active) {
         st.b = bounds();
         var b0 = st.b;
-        st.px = w.screenX + L.cw / 2; st.py = w.screenY + L.ch / 2;
+        st.px = w.screenX; st.py = w.screenY;
         st.vx = b0 ? toVirt(st.px, b0.minX, b0.maxX) : st.px;
         st.vy = b0 ? toVirt(st.py, b0.minY, b0.maxY) : st.py;
         st.offX = clamp(e.screenX - w.screenX, 10, w.outerWidth - 10);
         st.offY = clamp(e.screenY - w.screenY, 10, w.outerHeight - 10);
         st.peak = 0; st.prev = 0; st.run = 0; st.gl = false; st.watch = false; st.sent = []; st.skipCursor = false; st.active = true;
-        liftTo(true);
       }
       var b = st.b;
       if (mag > st.peak) { st.peak = mag; st.run = 0; }
@@ -161,7 +137,7 @@
     w.__pipWatch = w.setInterval(() => {
       if (!PIP.DRAG_SNAP) return;
       var x = w.screenX, y = w.screenY, now = performance.now();
-      if (st.active || st.animRaf || st.raf || L.raf || now < (w.__pipZoomUntil || 0)) { lx = x; ly = y; moving = false; return; }
+      if (st.active || st.animRaf || st.raf || now < (w.__pipZoomUntil || 0)) { lx = x; ly = y; moving = false; return; }
       if (x !== lx || y !== ly) { lx = x; ly = y; moving = true; quietSince = now; return; }
       if (moving && now - quietSince >= PIP.DRAG_QUIET) { moving = false; dragSettle(); }
     }, 50);
