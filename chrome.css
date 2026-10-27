@@ -53,7 +53,6 @@
     right: auto !important;
     /* Built-in Firefox left arrow icon (takes the icon color automatically) */
     background-image: url("chrome://global/skin/icons/arrow-left.svg") !important;
-    rotate: 45deg !important;
   }
   #close {
     left: auto !important;
