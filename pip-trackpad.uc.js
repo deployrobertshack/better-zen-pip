@@ -203,10 +203,11 @@
     set(u, "left", "10px"); set(u, "right", "auto");
     set(u, "background-image", 'url("chrome://global/skin/icons/arrow-left.svg")');
     set(u, "rotate", "45deg"); // left arrow turned clockwise 45deg = arrow pointing to the top left
+    set(u, "background-position", "calc(50% - 1px) calc(50% + 0px)"); // shifts left arrow within image to center it
     // No hover tooltips: strip title/tooltiptext now, and again whenever Firefox re-adds them.
-    var strip = () => d.querySelectorAll("[title],[tooltiptext]").forEach(el => { el.removeAttribute("title"); el.removeAttribute("tooltiptext"); });
+    var strip = () => d.querySelectorAll("[title],[tooltiptext],[tooltip]").forEach(el => { el.removeAttribute("title"); el.removeAttribute("tooltiptext"); el.removeAttribute("tooltip"); });
     strip();
-    try { new w.MutationObserver(strip).observe(d.documentElement, { attributes: true, subtree: true, attributeFilter: ["title", "tooltiptext"] }); } catch (e) {}
+    try { new w.MutationObserver(strip).observe(d.documentElement, { attributes: true, subtree: true, attributeFilter: ["title", "tooltiptext", "tooltip"] }); } catch (e) {}
     set(c, "left", "auto"); set(c, "right", "10px");
     set(m, "left", "auto"); set(m, "right", "50px");
   };
