@@ -202,6 +202,11 @@
     var u = d.getElementById("unpip"), c = d.getElementById("close"), m = d.getElementById("minimize");
     set(u, "left", "10px"); set(u, "right", "auto");
     set(u, "background-image", 'url("chrome://global/skin/icons/arrow-left.svg")');
+    set(u, "rotate", "45deg"); // left arrow turned clockwise 45deg = arrow pointing to the top left
+    // No hover tooltips: strip title/tooltiptext now, and again whenever Firefox re-adds them.
+    var strip = () => d.querySelectorAll("[title],[tooltiptext]").forEach(el => { el.removeAttribute("title"); el.removeAttribute("tooltiptext"); });
+    strip();
+    try { new w.MutationObserver(strip).observe(d.documentElement, { attributes: true, subtree: true, attributeFilter: ["title", "tooltiptext"] }); } catch (e) {}
     set(c, "left", "auto"); set(c, "right", "10px");
     set(m, "left", "auto"); set(m, "right", "50px");
   };
